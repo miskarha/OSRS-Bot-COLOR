@@ -1,7 +1,7 @@
 import shutil
 import time
 from pathlib import Path
-
+import random
 import utilities.api.item_ids as item_ids
 import utilities.color as clr
 import utilities.game_launcher as launcher
@@ -127,6 +127,8 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
             # Loot all highlighted items on the ground
             if self.loot_items:
                 self.__loot(api_status)
+                self.__bury(api_status)
+            
 
             self.update_progress((time.time() - start_time) / end_time)
 
@@ -143,6 +145,25 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
         self.log_msg("Eating food...")
         self.mouse.move_to(self.win.inventory_slots[food_slots[0]].random_point())
         self.mouse.click()
+
+    def __bury(self, api: StatusSocket):
+        bone_slots = api.get_inv_item_indices(item_ids.BONES)
+        num_bones = len(bone_slots)
+        if num_bones <1:
+            return
+#        n= random.randint(10,num_bones)
+        if api.get_is_inv_full():
+            self.log_msg("Burying bones")
+            for i in range(num_bones):
+                self.mouse.move_to(self.win.inventory_slots[bone_slots[i]].random_point())
+                self.mouse.click()
+                time.sleep(0.3)        
+#        if num_bones >= n:
+#            for i in range(num_bones):
+#                self.mouse.move_to(self.win.inventory_slots[bone_slots[i]].random_point())
+#                self.mouse.click()
+#                time.sleep(0.3)
+        self.log_msg("Buried., {} bones".format(num_bones))
 
     def __loot(self, api: StatusSocket):
         """Picks up loot while there is loot on the ground"""
