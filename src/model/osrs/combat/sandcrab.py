@@ -71,22 +71,66 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
         launcher.launch_runelite_with_settings(self, dst)
 
     def main_loop(self):
-        seeds, api_morg, api_status,start_time,end_time = self.initialize_main_loop()
+        self.log_msg("WARNING: This script is for testing and may not be safe for personal use. Please modify it to suit your needs.")
+        seeds = rd.random_seeds(0,8,100)
+        # Setup API
+        api_morg = MorgHTTPSocket()
+        api_status = StatusSocket()
+
+        self.toggle_auto_retaliate(True)
+
+        self.log_msg("Selecting inventory...")
+        self.mouse.move_to(self.win.cp_tabs[3].random_point(custom_seeds=seeds))
+        self.mouse.click()
+        failed_searches = 0
 
         # Main loop
+        start_time = time.time()
+        end_time = self.running_time * 60
         while time.time() - start_time < end_time:
-            
-            #toggle run on if enough energy
-            self.running()
+            run_energy = random.randint(85,100)
+            # toggle run if it is not on
+            if self.get_run_energy() > run_energy:
+                self.toggle_run(True)
+
+
 
             # If inventory is full...
-            self.check_inv_full(api_morg)
+            if api_status.get_is_inv_full():
+                self.log_msg("Inventory is full. Idk what to do.")
+                self.set_status(BotStatus.STOPPED)
+                return
 
             # While not in combat
-            self.handlecombat(api_morg,seeds)
+            while not api_morg.get_is_in_combat():
+                # Find a target
+                target = self.get_nearest_tagged_NPC(clr.CYAN)               
+                if target is None:
+                    failed_searches += 1
+                    if failed_searches % 10 == 0:
+                        self.log_msg("Searching for targets...")
+                    if failed_searches > 60:
+                        # If we've been searching for a whole minute...
+                        self.__logout("No tagged targets found. Logging out.")
+                        return
+                    time.sleep(1)
+                    continue
+                failed_searches = 0
 
+                # Click target if mouse is actually hovering over it, else recalculate
+                self.mouse.move_to(target.random_point())
+                if not self.mouseover_text(contains="Attack", color=clr.OFF_WHITE):
+                    continue
+                self.mouse.click()
+                time.sleep(1.5)
+                if not api_morg.get_is_player_idle():
+                    continue
             # While in combat
-            self.eat_on_combat(api_morg,api_status)
+            while api_morg.get_is_in_combat():
+                # Check to eat food
+                if self.get_hp() < self.hp_threshold:
+                    self.__eat(api_status)
+                time.sleep(1)
 
             # Loot all highlighted items on the ground
 #            if self.loot_items:
@@ -98,11 +142,6 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
 
         self.update_progress(1)
         self.__logout("Finished.")
-
-
-
-
-
 
     def __eat(self, api: StatusSocket):
         self.log_msg("HP is low.")
@@ -169,72 +208,10 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
         if door := self.get_nearest_tag(clr.BLACK) and ocr.find_text("reach that!",self.win.chat,ocr.PLAIN_12,clr.BLACK):
             print("found door")
             door = self.get_nearest_tag(clr.BLACK)
-            if door == None:
-                return
             self.mouse.move_to(door.random_point(seeds))
             if self.mouseover_text(contains="Open", color=clr.OFF_WHITE):
                 self.mouse.click()
                 tm = random.randint(3,5)
                 time.sleep(tm)
     
-    def handlecombat(self,api_morg: MorgHTTPSocket,seeds, failed_searches=0):
-            while not api_morg.get_is_in_combat():
-                # Find a target
-                target = self.get_nearest_tagged_NPC(clr.CYAN)               
-                if target is None:
-                    failed_searches += 1
-                    if failed_searches % 10 == 0:
-                        self.log_msg("Searching for targets...")
-                    if failed_searches > 60:
-                        # If we've been searching for a whole minute...
-                        self.__logout("No tagged targets found. Logging out.")
-                        return
-                    time.sleep(1)
-                    continue
-                failed_searches = 0
-
-                # Click target if mouse is actually hovering over it, else recalculate
-                self.mouse.move_to(target.random_point())
-                if not self.mouseover_text(contains="Attack", color=clr.OFF_WHITE):
-                    continue
-                self.mouse.click()
-                time.sleep(7)
-                if not api_morg.get_is_player_idle():
-                    continue
-                #if character is stuck on door, uncomment if needed
-                #self.handle_door(seeds)
-                #if trying to target mob on combat  
-                self.attack_random_mob(seeds)
-
-    def running(self):
-            run_energy = random.randint(85,100)
-            # toggle run if it is not on
-            if self.get_run_energy() > run_energy:
-                self.toggle_run(True)
-
-    def initialize_main_loop(self):
-        seeds = rd.random_seeds(0,8,100)
-        # Setup API
-        api_morg = MorgHTTPSocket()
-        api_status = StatusSocket()
-        start_time = time.time()
-        end_time = self.running_time * 60
-        self.toggle_auto_retaliate(True)
-
-        self.log_msg("Selecting inventory...")
-        self.mouse.move_to(self.win.cp_tabs[3].random_point(custom_seeds=seeds))
-        self.mouse.click()
-        return seeds, api_morg, api_status, start_time, end_time
-
-    def check_inv_full(self,api_morg: MorgHTTPSocket):
-            if api_morg.get_is_inv_full():
-                self.log_msg("Inventory is full. Idk what to do.")
-                self.set_status(BotStatus.STOPPED)
-                return
     
-    def eat_on_combat(self,api_morg: MorgHTTPSocket,api_status: StatusSocket):
-            while api_morg.get_is_in_combat():
-                # Check to eat food
-                if self.get_hp() < self.hp_threshold:
-                    self.__eat(api_status)
-                time.sleep(1)

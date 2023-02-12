@@ -47,7 +47,6 @@ class OSRSMiner(OSRSBot):
         self.log_msg("Selecting inventory...")
         self.mouse.move_to(self.win.cp_tabs[3].random_point(custom_seeds=seeds))
         self.mouse.click()
-        
         self.ores = 0
         failed_searches = 0
         # Main loop
