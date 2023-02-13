@@ -12,7 +12,7 @@ from utilities.api.status_socket import StatusSocket
 import utilities.random_util as rd
 import utilities.ocr as ocr
 
-class OSRSCombat(OSRSBot, launcher.Launchable):
+class OSRSSandcrabs(OSRSBot, launcher.Launchable):
     def __init__(self):
         bot_title = "Combat"
         description = (

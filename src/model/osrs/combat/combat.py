@@ -11,7 +11,7 @@ from utilities.api.morg_http_client import MorgHTTPSocket
 from utilities.api.status_socket import StatusSocket
 import utilities.random_util as rd
 import utilities.ocr as ocr
-
+import utilities.api.stat_names as stat_names
 class OSRSCombat(OSRSBot, launcher.Launchable):
     def __init__(self):
         bot_title = "Combat"
@@ -75,7 +75,13 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
 
         # Main loop
         while time.time() - start_time < end_time:
-            
+            if api_morg.get_skill_level(stat_names.ATTACK) >39 and len(api_morg.get_inv_item_indices(item_ids.RUNE_SCIMITAR)) >0:
+                weapon = api_morg.get_inv_item_indices(item_ids.RUNE_SCIMITAR)
+                if weapon == None or len(weapon) == 0:
+                    continue
+                self.mouse.move_to(self.win.inventory_slots[weapon[0]].random_point(seeds))
+                if self.mouseover_text(contains="Wield", color=clr.OFF_WHITE):
+                    self.mouse.click()
             #toggle run on if enough energy
             self.running()
 
@@ -98,10 +104,6 @@ class OSRSCombat(OSRSBot, launcher.Launchable):
 
         self.update_progress(1)
         self.__logout("Finished.")
-
-
-
-
 
 
     def __eat(self, api: StatusSocket):
