@@ -324,11 +324,11 @@ if __name__ == "__main__":
     # To test a bot without the GUI, address the comments for each line below.
     #from model.osrs.combat.combat import OSRSCombat
     # Uncomment this line and replace <folder_bot_is_in> and <bot_class_name> accordingly to import your bot
-    from model.osrs.herb_cleaner import OSRSHerbCleaner
-    app = App()
-    #app = App(test=True)  # Add the "test=True" argument to the App constructor call.
-    app.start()  # Comment out this line.
-    #app.test(OSRSCombat())  # Uncomment this line and replace argument with your bot's instance.
+    from model.osrs.cleaner import OSRSHerbCleaner
+    #app = App()
+    app = App(test=True)  # Add the "test=True" argument to the App constructor call.
+    #app.start()  # Comment out this line.
+    app.test(OSRSHerbCleaner())  # Uncomment this line and replace argument with your bot's instance.
 
     # IMPORTANT
     # - Make sure your bot's options are pre-defined in its __init__ method.

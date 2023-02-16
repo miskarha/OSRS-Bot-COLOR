@@ -12,13 +12,14 @@ import utilities.api.stat_names as stat_names
 import utilities.imagesearch as imsearch
 import utilities.ocr as ocr
 
+import pyautogui as pag
 
 class OSRSHerbCleaner(OSRSBot):
     def __init__(self):
-        bot_title = "Miner"
-        description = "This bot banks iron. Position character in f2p mining guild. Tag ore, ladder and bank."
+        bot_title = "Cleaner"
+        description = "Cleans herbs"
         super().__init__(bot_title=bot_title, description=description)
-        self.running_time = 1
+        self.running_time = 500
         self.take_breaks = False
     
     def create_options(self):
@@ -52,20 +53,18 @@ class OSRSHerbCleaner(OSRSBot):
         self.mouse.click()
         self.herbs = 0
         bank_color = clr.PINK
-        # Main loop
         start_time = time.time()
         end_time = self.running_time * 60
-        probability = 0.05
         raw_shrimp_img = imsearch.BOT_IMAGES.joinpath("items","Raw_shrimps_bank.png")
         shrimp_img = imsearch.BOT_IMAGES.joinpath("Shrimps.png")
 
         while (time.time() - start_time < end_time):             
 
             if api_s.get_is_inv_empty():
-                self.withdraw_item(shrimp_img,bank_color,seeds)
+                self.withdraw_item(raw_shrimp_img,bank_color,seeds)
             
             if not api_s.get_is_inv_empty():
-               self.bank_item(shrimp_img,bank_color,seeds)
+               self.bank_item(raw_shrimp_img,bank_color,seeds)
 
             self.update_progress((time.time() - start_time) / end_time)
             
@@ -73,28 +72,39 @@ class OSRSHerbCleaner(OSRSBot):
         self.__logout("Finished.")
    
 
-def bank_item(self,item_img,bank_color,seeds):
-            bank = self.get_nearest_tag(bank_color)
-            self.mouse.move_to(bank.random_point(seeds))
-            if self.mouseover_text(contains="Bank", color=clr.OFF_WHITE):
-                self.mouse.click()
-            self.mouse.click()                
-            time.sleep(rd.random.uniform(0.5,1))
-            if raw_shrimp := imsearch.search_img_in_rect(item_img,self.win.control_panel):
-                self.mouse.move_to(raw_shrimp.random_point(seeds))
-                if self.mouseover_text(contains="Deposit", color=clr.OFF_WHITE):
-                    self.mouse.click()
-                    time.sleep(0.1) 
-
-def withdraw_item(self,item_img,bank_color,seeds):
-    if ocr.find_text("The Bank of Gielinor"):
+    def bank_item(self,item_img,bank_color,seeds):
         bank = self.get_nearest_tag(bank_color)
         self.mouse.move_to(bank.random_point(seeds))
-        self.mouse.click()                
+        if self.mouseover_text(contains="Bank", color=clr.OFF_WHITE):
+                self.mouse.click()             
         time.sleep(rd.random.uniform(0.5,1))
-        if raw_shrimp := imsearch.search_img_in_rect(item_img,self.win.game_view):
-            self.mouse.move_to(raw_shrimp.random_point(seeds))
+        if item := imsearch.search_img_in_rect(item_img,self.win.control_panel):
+                self.mouse.move_to(item.random_point(seeds))
+                time.sleep(0.5)
+                if self.mouseover_text(contains="Deposit", color=clr.OFF_WHITE):
+                    self.mouse.click()
+                    time.sleep(2) 
+
+    def withdraw_item(self,item_img,bank_color,seeds):
+        bank = self.get_nearest_tag(bank_color)
+        if bank == None:
+            if item := imsearch.search_img_in_rect(item_img,self.win.game_view):
+                self.mouse.move_to(item.random_point(seeds))
+                if self.mouseover_text(contains="Withdraw", color=clr.OFF_WHITE):
+                    self.mouse.click()
+                    pag.press("escape")
+                    time.sleep(2)
+                    return            
+        self.mouse.move_to(bank.random_point(seeds))
+        self.mouse.click()                
+        time.sleep(rd.random.uniform(1,1.5))
+        if item := imsearch.search_img_in_rect(item_img,self.win.game_view):
+            self.mouse.move_to(item.random_point(seeds))
             if self.mouseover_text(contains="Withdraw", color=clr.OFF_WHITE):
                 self.mouse.click()
-                time.sleep(0.1)
+                pag.press("escape")
+                time.sleep(1)
+                
+
+
                 
